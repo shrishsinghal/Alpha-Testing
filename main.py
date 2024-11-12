@@ -99,8 +99,8 @@ tickers, ticker_dfs = get_ticker_dfs(start=period_start, end=period_end)
 testfor = 20
 tickers = tickers[:testfor]
 
-from alpha3 import Alpha3
-alpha3 = Alpha3(insts=tickers, dfs=ticker_dfs, start=period_start, end=period_end)
+from alpha2 import Alpha2
+alpha1 = Alpha2(insts=tickers, dfs=ticker_dfs, start=period_start, end=period_end)
 
-df3 = alpha3.run_simulation()
-print(df3)
+df2 = alpha1.run_simulation()
+print(df2)

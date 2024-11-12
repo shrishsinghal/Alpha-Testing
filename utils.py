@@ -35,12 +35,17 @@ def get_pnl_stats(date, prev, portfolio_df, insts, idx, dfs):
     
 import numpy as np
 import pandas as pd
+
+from copy import deepcopy
     
+class AbstractImplementationException(Exception):
+    pass
+
 class Alpha():
 
     def __init__(self, insts, dfs, start, end):
         self.insts = insts
-        self.dfs = dfs
+        self.dfs = deepcopy(dfs)
         self.start = start
         self.end = end
 
@@ -53,7 +58,18 @@ class Alpha():
 
         return portfolio_df
 
+    def pre_compute(self, trade_range):
+        pass
+
+    def post_compute(self, trade_range):
+        pass
+
+    def compute_signal_distribution(self, eligibles, date):
+        raise AbstractImplementationException("no concrete implementation for signal generation")
+
     def compute_meta_info(self, trade_range):
+
+        self.pre_compute(trade_range=trade_range)
         
         for inst in self.insts:
             df = pd.DataFrame(index=trade_range)            
@@ -62,7 +78,8 @@ class Alpha():
             sampled = self.dfs[inst]['close'] != self.dfs[inst]['close'].shift(1).bfill()
             eligible = sampled.rolling(5).apply(lambda x: int(np.any(x))).fillna(0)            
             self.dfs[inst]['eligible'] = eligible.astype(int) & (self.dfs[inst]['close'] > 0).astype(int)
-            
+        
+        self.post_compute(trade_range=trade_range)
         return
 
 
@@ -91,18 +108,7 @@ class Alpha():
                     dfs=self.dfs
                 )
 
-            
-            
-            alpha_scores = {}
-            import random
-            for inst in eligibles:
-                alpha_scores[inst] = random.uniform(0,1)
-            
-            alpha_scores = {k:v for k,v in sorted(alpha_scores.items(), key=lambda item: item[1])}
-
-            alpha_long = list(alpha_scores.keys())[-int(len(eligibles)/4):]
-            alpha_short = list(alpha_scores.keys())[:int(len(eligibles)/4)]
-
+            forecasts, forecast_chips = self.compute_signal_distribution(eligibles, date)
 
             for inst in non_eligibles:
                 portfolio_df.loc[i, "{} w".format(inst)] = 0     
@@ -111,8 +117,8 @@ class Alpha():
             nominal_tot = 0
 
             for inst in eligibles:
-                forecast = 1 if inst in alpha_long else (-1 if inst in alpha_short else 0)
-                dollar_allocation = portfolio_df.loc[i, 'capital']/(len(alpha_long) + len(alpha_short))
+                forecast = forecasts[inst]
+                dollar_allocation = portfolio_df.loc[i, 'capital']/forecast_chips if forecast_chips != 0 else 0
                 position = forecast * dollar_allocation/self.dfs[inst].loc[date, 'close']
                 portfolio_df.loc[i, inst + " units"] = position
                 nominal_tot += abs(position*self.dfs[inst].loc[date, 'close'])
