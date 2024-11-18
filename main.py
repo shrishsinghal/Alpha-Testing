@@ -92,15 +92,21 @@ from utils import Alpha
 
 period_start = datetime(2010, 1, 1, tzinfo=pytz.utc)
 period_end = datetime.now(pytz.utc)
-
-
 tickers, ticker_dfs = get_ticker_dfs(start=period_start, end=period_end)
-
 testfor = 20
 tickers = tickers[:testfor]
 
+from alpha1 import Alpha1
 from alpha2 import Alpha2
-alpha1 = Alpha2(insts=tickers, dfs=ticker_dfs, start=period_start, end=period_end)
+from alpha3 import Alpha3
 
-df2 = alpha1.run_simulation()
-print(df2)
+alpha1 = Alpha1(insts=tickers, dfs=ticker_dfs, start=period_start, end=period_end)
+alpha2 = Alpha2(insts=tickers, dfs=ticker_dfs, start=period_start, end=period_end)
+alpha3 = Alpha3(insts=tickers, dfs=ticker_dfs, start=period_start, end=period_end)
+
+
+df1 = alpha1.run_simulation()
+df2 = alpha2.run_simulation()
+df3 = alpha3.run_simulation()
+
+

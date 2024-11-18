@@ -12,13 +12,17 @@ class Alpha3(Alpha):
         self.alphas = {}
         for inst in self.insts:
             inst_df = self.dfs[inst]
-            alpha = -1 * (1-(inst_df['open']/inst_df['close'])).rolling(12).mean()
-            self.alphas[inst] = alpha
+            fast = np.where(inst_df.close.rolling(10).mean() > inst_df.close.rolling(50).mean(), 1, 0) 
+            medium = np.where(inst_df.close.rolling(20).mean() > inst_df.close.rolling(100).mean(), 1, 0) 
+            slow = np.where(inst_df.close.rolling(50).mean() > inst_df.close.rolling(200).mean(), 1, 0) 
+
+            alpha = fast + medium + slow
+            self.dfs[inst]['alpha'] = alpha
         return
 
     def post_compute(self, trade_range):
         for inst in self.insts:
-            self.dfs[inst]['alpha'] = self.alphas[inst]
+            
             self.dfs[inst]['alpha'] = self.dfs[inst]['alpha'].ffill()
             self.dfs[inst]['eligible'] = self.dfs[inst]['eligible'] \
                 & (~pd.isna(self.dfs[inst]['alpha']))
