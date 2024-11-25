@@ -89,6 +89,7 @@ def get_ticker_dfs(start, end):
 
 
 from utils import Alpha
+from utils import save_pickle
 
 period_start = datetime(2010, 1, 1, tzinfo=pytz.utc)
 period_end = datetime.now(pytz.utc)
@@ -108,5 +109,6 @@ alpha3 = Alpha3(insts=tickers, dfs=ticker_dfs, start=period_start, end=period_en
 df1 = alpha1.run_simulation()
 df2 = alpha2.run_simulation()
 df3 = alpha3.run_simulation()
+save_pickle("simulation.obj", (df1, df2, df3))
 
 
